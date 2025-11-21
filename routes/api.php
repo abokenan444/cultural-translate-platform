@@ -10,7 +10,8 @@ use App\Http\Controllers\Api\V1\VoiceTranslationController;
 use App\Http\Controllers\Api\V1\CollaborationController;
 use App\Http\Controllers\Api\V1\AIContextController;
 use App\Http\Controllers\Api\V1\VisualTranslationController;
-use App\Http\Controllers\Api\V1\AnalyticsController;
+use AppHttpControllersApiV1AnalyticsController;
+use AppHttpControllersApiV1AIAgentController;ller;
 
 Route::middleware(['auth:sanctum'])   // يمكنك تغيير الميدلوير حسب نظامك
     ->prefix('ai-agent')
@@ -89,11 +90,17 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/visual/document', [VisualTranslationController::class, 'translateDocument']);
     Route::post('/visual/screenshot', [VisualTranslationController::class, 'translateScreenshot']);
     
-    // Analytics & Insights
-    Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboard']);
-    Route::get('/analytics/insights', [AnalyticsController::class, 'getAIInsights']);
-    Route::get('/analytics/usage', [AnalyticsController::class, 'getUsageAnalytics']);
-    Route::get('/analytics/team', [AnalyticsController::class, 'getTeamAnalytics']);
-    Route::get('/analytics/costs', [AnalyticsController::class, 'getCostAnalysis']);
-    Route::post('/analytics/export', [AnalyticsController::class, 'exportReport']);
+    // Analytics & Insigh    // Analytics
+    Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
+    Route::get('/analytics/usage', [AnalyticsController::class, 'usage']);
+    Route::get('/analytics/performance', [AnalyticsController::class, 'performance']);
+    Route::get('/analytics/insights', [AnalyticsController::class, 'insights']);
+    Route::get('/analytics/predictions', [AnalyticsController::class, 'predictions']);
+    Route::post('/analytics/export', [AnalyticsController::class, 'export']);
+
+    // AI Agent (Natural Language Processing)
+    Route::post('/ai-agent/process', [AIAgentController::class, 'process']);
+    Route::get('/ai-agent/status', [AIAgentController::class, 'status']);
+    Route::get('/ai-agent/history', [AIAgentController::class, 'history']);
+    Route::delete('/ai-agent/history', [AIAgentController::class, 'clearHistory']);Report']);
 });
