@@ -6,6 +6,11 @@ use App\Http\Controllers\AIAgentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TranslationController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\VoiceTranslationController;
+use App\Http\Controllers\Api\V1\CollaborationController;
+use App\Http\Controllers\Api\V1\AIContextController;
+use App\Http\Controllers\Api\V1\VisualTranslationController;
+use App\Http\Controllers\Api\V1\AnalyticsController;
 
 Route::middleware(['auth:sanctum'])   // يمكنك تغيير الميدلوير حسب نظامك
     ->prefix('ai-agent')
@@ -57,4 +62,38 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/subscription/upgrade', [SubscriptionController::class, 'upgrade']);
     Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel']);
     Route::get('/subscription/usage', [SubscriptionController::class, 'usage']);
+    
+    // Voice Translation
+    Route::post('/voice/translate', [VoiceTranslationController::class, 'translateVoice']);
+    Route::post('/voice/text-to-speech', [VoiceTranslationController::class, 'textToSpeech']);
+    Route::post('/voice/stream', [VoiceTranslationController::class, 'streamVoiceTranslation']);
+    
+    // Collaboration
+    Route::post('/projects', [CollaborationController::class, 'createProject']);
+    Route::post('/projects/{projectId}/invite', [CollaborationController::class, 'inviteMember']);
+    Route::get('/projects/{projectId}/session', [CollaborationController::class, 'getSession']);
+    Route::post('/projects/{projectId}/translations/{translationId}/comments', [CollaborationController::class, 'addComment']);
+    Route::post('/projects/{projectId}/translations/{translationId}/suggestions', [CollaborationController::class, 'suggestAlternative']);
+    Route::get('/projects/{projectId}/activity', [CollaborationController::class, 'getActivityFeed']);
+    
+    // AI Context & Smart Suggestions
+    Route::post('/ai/analyze-context', [AIContextController::class, 'analyzeContext']);
+    Route::post('/ai/smart-suggestions', [AIContextController::class, 'getSmartSuggestions']);
+    Route::post('/ai/sentiment', [AIContextController::class, 'detectSentiment']);
+    Route::get('/ai/terminology/{industry}', [AIContextController::class, 'getIndustryTerminology']);
+    
+    // Visual Translation
+    Route::post('/visual/image', [VisualTranslationController::class, 'translateImage']);
+    Route::post('/visual/video', [VisualTranslationController::class, 'translateVideo']);
+    Route::get('/visual/video/status/{jobId}', [VisualTranslationController::class, 'getVideoStatus']);
+    Route::post('/visual/document', [VisualTranslationController::class, 'translateDocument']);
+    Route::post('/visual/screenshot', [VisualTranslationController::class, 'translateScreenshot']);
+    
+    // Analytics & Insights
+    Route::get('/analytics/dashboard', [AnalyticsController::class, 'getDashboard']);
+    Route::get('/analytics/insights', [AnalyticsController::class, 'getAIInsights']);
+    Route::get('/analytics/usage', [AnalyticsController::class, 'getUsageAnalytics']);
+    Route::get('/analytics/team', [AnalyticsController::class, 'getTeamAnalytics']);
+    Route::get('/analytics/costs', [AnalyticsController::class, 'getCostAnalysis']);
+    Route::post('/analytics/export', [AnalyticsController::class, 'exportReport']);
 });
