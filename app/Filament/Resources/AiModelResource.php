@@ -3,45 +3,79 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AiModelResource\Pages;
-use App\Filament\Resources\AiModelResource\RelationManagers;
 use App\Models\AiModel;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AiModelResource extends Resource
 {
     protected static ?string $model = AiModel::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    protected static ?string $navigationGroup = 'API & Translation';
-
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationIcon = 'heroicon-o-cpu-chip';
+    
+    protected static ?string $navigationGroup = 'API Management';
+    
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('api_provider_id')
+                    ->label('API Provider')
+                    ->relationship('apiProvider', 'name')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('code')
+                            ->required()
+                            ->maxLength(255),
+                    ]),
                 Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('slug')
-                    ->required(),
-                Forms\Components\TextInput::make('provider_id')
+                    ->label('Model Name')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('model_type')
-                    ->required(),
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('model_id')
+                    ->label('Model ID')
+                    ->required()
+                    ->maxLength(255)
+                    ->helperText('API model identifier (e.g., gpt-4, claude-3)'),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->rows(3),
+                Forms\Components\TextInput::make('max_tokens')
+                    ->label('Max Tokens')
+                    ->numeric()
+                    ->default(4096),
                 Forms\Components\TextInput::make('cost_per_1k_tokens')
-                    ->required()
+                    ->label('Cost per 1K Tokens')
+                    ->numeric()
+                    ->step(0.0001)
+                    ->prefix('$')
+                    ->default(0),
+                Forms\Components\Toggle::make('supports_translation')
+                    ->label('Supports Translation')
+                    ->default(true),
+                Forms\Components\Toggle::make('supports_chat')
+                    ->label('Supports Chat')
+                    ->default(false),
+                Forms\Components\Toggle::make('supports_vision')
+                    ->label('Supports Vision')
+                    ->default(false),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
+                Forms\Components\TextInput::make('display_order')
+                    ->label('Display Order')
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
             ]);
     }
 
@@ -50,47 +84,59 @@ class AiModelResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('provider_id')
-                    ->numeric()
+                    ->label('Model')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('model_type')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('model_id')
+                    ->label('Model ID')
+                    ->searchable()
+                    ->badge(),
+                Tables\Columns\TextColumn::make('apiProvider.name')
+                    ->label('Provider')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('max_tokens')
+                    ->label('Max Tokens')
+                    ->formatStateUsing(fn ($state) => number_format($state)),
                 Tables\Columns\TextColumn::make('cost_per_1k_tokens')
-                    ->numeric()
+                    ->label('Cost/1K')
+                    ->money('USD')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('supports_translation')
+                    ->label('Translation')
+                    ->boolean(),
+                Tables\Columns\IconColumn::make('supports_chat')
+                    ->label('Chat')
+                    ->boolean(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('display_order')
+                    ->label('Order')
+                    ->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('api_provider_id')
+                    ->label('Provider')
+                    ->relationship('apiProvider', 'name')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+                Tables\Filters\TernaryFilter::make('supports_translation')
+                    ->label('Translation')
+                    ->boolean(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('display_order');
     }
 
     public static function getPages(): array
@@ -98,7 +144,6 @@ class AiModelResource extends Resource
         return [
             'index' => Pages\ListAiModels::route('/'),
             'create' => Pages\CreateAiModel::route('/create'),
-            'view' => Pages\ViewAiModel::route('/{record}'),
             'edit' => Pages\EditAiModel::route('/{record}/edit'),
         ];
     }

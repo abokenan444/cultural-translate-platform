@@ -3,68 +3,81 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TranslationResource\Pages;
-use App\Filament\Resources\TranslationResource\RelationManagers;
 use App\Models\Translation;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TranslationResource extends Resource
 {
     protected static ?string $model = Translation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-language';
+    
+    protected static ?string $navigationGroup = 'Translation Management';
+    
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
+                Forms\Components\Select::make('user_id')
+                    ->label('User')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('company_id')
+                    ->label('Company')
+                    ->relationship('company', 'name')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('source_language_id')
+                    ->label('Source Language')
+                    ->relationship('sourceLanguage', 'name_en')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('company_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('type')
-                    ->required(),
-                Forms\Components\TextInput::make('source_language')
-                    ->required(),
-                Forms\Components\TextInput::make('target_language')
-                    ->required(),
-                Forms\Components\TextInput::make('source_culture'),
-                Forms\Components\TextInput::make('target_culture'),
-                Forms\Components\TextInput::make('model_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('api_key_id')
-                    ->numeric(),
-                Forms\Components\TextInput::make('tokens_in')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('target_language_id')
+                    ->label('Target Language')
+                    ->relationship('targetLanguage', 'name_en')
                     ->required()
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Textarea::make('source_text')
+                    ->label('Source Text')
+                    ->required()
+                    ->rows(4),
+                Forms\Components\Textarea::make('translated_text')
+                    ->label('Translated Text')
+                    ->rows(4),
+                Forms\Components\Select::make('ai_model_id')
+                    ->label('AI Model')
+                    ->relationship('aiModel', 'name')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\TextInput::make('character_count')
+                    ->label('Character Count')
                     ->numeric()
                     ->default(0),
-                Forms\Components\TextInput::make('tokens_out')
-                    ->required()
+                Forms\Components\TextInput::make('processing_time')
+                    ->label('Processing Time (seconds)')
                     ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('total_tokens')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('cost')
-                    ->required()
-                    ->numeric()
-                    ->default(0)
-                    ->prefix('$'),
-                Forms\Components\TextInput::make('response_time_ms')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
+                    ->step(0.01),
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed',
+                    ])
+                    ->default('pending'),
                 Forms\Components\Textarea::make('error_message')
-                    ->columnSpanFull(),
+                    ->label('Error Message')
+                    ->rows(2),
             ]);
     }
 
@@ -72,73 +85,86 @@ class TranslationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('company_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('type')
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('User')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('company.name')
+                    ->label('Company')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('sourceLanguage.code')
+                    ->label('From')
+                    ->badge()
+                    ->color('info'),
+                Tables\Columns\TextColumn::make('targetLanguage.code')
+                    ->label('To')
+                    ->badge()
+                    ->color('success'),
+                Tables\Columns\TextColumn::make('source_text')
+                    ->label('Source')
+                    ->limit(50)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('source_language')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('target_language')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('source_culture')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('target_culture')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('model_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('character_count')
+                    ->label('Characters')
+                    ->formatStateUsing(fn ($state) => number_format($state))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('api_key_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tokens_in')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tokens_out')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_tokens')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('cost')
-                    ->money()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('response_time_ms')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('aiModel.name')
+                    ->label('Model')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'completed' => 'success',
+                        'processing' => 'info',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed',
+                    ]),
+                Tables\Filters\SelectFilter::make('source_language_id')
+                    ->label('Source Language')
+                    ->relationship('sourceLanguage', 'name_en')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('target_language_id')
+                    ->label('Target Language')
+                    ->relationship('targetLanguage', 'name_en')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('User')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array
@@ -146,7 +172,6 @@ class TranslationResource extends Resource
         return [
             'index' => Pages\ListTranslations::route('/'),
             'create' => Pages\CreateTranslation::route('/create'),
-            'view' => Pages\ViewTranslation::route('/{record}'),
             'edit' => Pages\EditTranslation::route('/{record}/edit'),
         ];
     }

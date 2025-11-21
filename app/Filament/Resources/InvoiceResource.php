@@ -15,82 +15,78 @@ class InvoiceResource extends Resource
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-
-    protected static ?string $navigationGroup = 'Subscription & Billing';
-
-    protected static ?int $navigationSort = 1;
+    
+    protected static ?string $navigationGroup = 'Subscription Management';
+    
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Invoice Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('invoice_number')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
-                        Forms\Components\Select::make('user_id')
-                            ->relationship('user', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('company_id')
-                            ->relationship('company', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        // Forms\Components\Select::make('subscription_id')
-                        //     ->relationship('subscription', 'id')
-                        //     ->searchable()
-                        //     ->preload(),
-                        Forms\Components\TextInput::make('stripe_invoice_id')
-                            ->maxLength(255),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Financial Details')
-                    ->schema([
-                        Forms\Components\TextInput::make('amount')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
-                        Forms\Components\TextInput::make('tax')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$')
-                            ->step(0.01)
-                            ->default(0),
-                        Forms\Components\TextInput::make('total')
-                            ->required()
-                            ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
-                        Forms\Components\TextInput::make('currency')
-                            ->required()
-                            ->default('USD')
-                            ->maxLength(3),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Status & Dates')
-                    ->schema([
-                        Forms\Components\Select::make('status')
-                            ->required()
-                            ->options([
-                                'draft' => 'Draft',
-                                'pending' => 'Pending',
-                                'paid' => 'Paid',
-                                'overdue' => 'Overdue',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->default('pending'),
-                        Forms\Components\DatePicker::make('invoice_date')
-                            ->required()
-                            ->default(now()),
-                        Forms\Components\DatePicker::make('due_date')
-                            ->required(),
-                        Forms\Components\DateTimePicker::make('paid_at'),
-                    ])->columns(2),
+                Forms\Components\Select::make('company_id')
+                    ->label('Company')
+                    ->relationship('company', 'name')
+                    ->required()
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('subscription_id')
+                    ->label('Subscription')
+                    ->relationship('subscription', 'id')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('payment_id')
+                    ->label('Payment')
+                    ->relationship('payment', 'transaction_id')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\TextInput::make('invoice_number')
+                    ->label('Invoice Number')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255),
+                Forms\Components\DatePicker::make('invoice_date')
+                    ->label('Invoice Date')
+                    ->required()
+                    ->default(now()),
+                Forms\Components\DatePicker::make('due_date')
+                    ->label('Due Date')
+                    ->required(),
+                Forms\Components\TextInput::make('subtotal')
+                    ->label('Subtotal')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0),
+                Forms\Components\TextInput::make('tax_amount')
+                    ->label('Tax Amount')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0),
+                Forms\Components\TextInput::make('discount_amount')
+                    ->label('Discount Amount')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0),
+                Forms\Components\TextInput::make('total_amount')
+                    ->label('Total Amount')
+                    ->required()
+                    ->numeric()
+                    ->prefix('$'),
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->required()
+                    ->options([
+                        'draft' => 'Draft',
+                        'sent' => 'Sent',
+                        'paid' => 'Paid',
+                        'overdue' => 'Overdue',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->default('draft'),
+                Forms\Components\Textarea::make('notes')
+                    ->label('Notes')
+                    ->rows(3),
             ]);
     }
 
@@ -99,49 +95,60 @@ class InvoiceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Invoice #')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('company.name')
+                    ->label('Company')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total')
-                    ->money('USD')
-                    ->sortable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'secondary' => 'draft',
-                        'warning' => 'pending',
-                        'success' => 'paid',
-                        'danger' => 'overdue',
-                        'gray' => 'cancelled',
-                    ]),
                 Tables\Columns\TextColumn::make('invoice_date')
+                    ->label('Date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('due_date')
+                    ->label('Due')
                     ->date()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total')
+                    ->money('USD')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'paid' => 'success',
+                        'sent' => 'info',
+                        'draft' => 'gray',
+                        'overdue' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
                     ->options([
                         'draft' => 'Draft',
-                        'pending' => 'Pending',
+                        'sent' => 'Sent',
                         'paid' => 'Paid',
                         'overdue' => 'Overdue',
                         'cancelled' => 'Cancelled',
                     ]),
-                Tables\Filters\SelectFilter::make('company')
-                    ->relationship('company', 'name'),
+                Tables\Filters\SelectFilter::make('company_id')
+                    ->label('Company')
+                    ->relationship('company', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -149,7 +156,8 @@ class InvoiceResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('invoice_date', 'desc');
     }
 
     public static function getPages(): array
@@ -159,10 +167,5 @@ class InvoiceResource extends Resource
             'create' => Pages\CreateInvoice::route('/create'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::where('status', 'pending')->count();
     }
 }

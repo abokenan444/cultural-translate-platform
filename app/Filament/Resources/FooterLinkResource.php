@@ -3,46 +3,60 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FooterLinkResource\Pages;
-use App\Filament\Resources\FooterLinkResource\RelationManagers;
 use App\Models\FooterLink;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class FooterLinkResource extends Resource
 {
     protected static ?string $model = FooterLink::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    protected static ?string $navigationGroup = 'Footer & Social';
-
+    protected static ?string $navigationIcon = 'heroicon-o-link';
+    
+    protected static ?string $navigationGroup = 'Website Settings';
+    
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('section_id')
+                Forms\Components\TextInput::make('title_en')
+                    ->label('Title (English)')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('title')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('title_ar')
+                    ->label('Title (Arabic)')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('url')
+                    ->label('URL')
                     ->required()
+                    ->url()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('target')
-                    ->maxLength(20)
-                    ->default('_self'),
-                Forms\Components\TextInput::make('sort_order')
+                Forms\Components\Select::make('section')
+                    ->label('Section')
+                    ->required()
+                    ->options([
+                        'company' => 'Company',
+                        'product' => 'Product',
+                        'support' => 'Support',
+                        'legal' => 'Legal',
+                    ])
+                    ->default('company'),
+                Forms\Components\TextInput::make('display_order')
+                    ->label('Display Order')
                     ->numeric()
                     ->default(0),
-                Forms\Components\Toggle::make('is_active'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
+                Forms\Components\Toggle::make('open_in_new_tab')
+                    ->label('Open in New Tab')
+                    ->default(false),
             ]);
     }
 
@@ -50,48 +64,60 @@ class FooterLinkResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('section_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('title_en')
+                    ->label('Title (EN)')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('title_ar')
+                    ->label('Title (AR)')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('url')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('target')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
+                    ->label('URL')
+                    ->limit(40),
+                Tables\Columns\TextColumn::make('section')
+                    ->label('Section')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'company' => 'info',
+                        'product' => 'success',
+                        'support' => 'warning',
+                        'legal' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\IconColumn::make('open_in_new_tab')
+                    ->label('New Tab')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('display_order')
+                    ->label('Order')
+                    ->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('section')
+                    ->label('Section')
+                    ->options([
+                        'company' => 'Company',
+                        'product' => 'Product',
+                        'support' => 'Support',
+                        'legal' => 'Legal',
+                    ]),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('display_order');
     }
 
     public static function getPages(): array
@@ -99,7 +125,6 @@ class FooterLinkResource extends Resource
         return [
             'index' => Pages\ListFooterLinks::route('/'),
             'create' => Pages\CreateFooterLink::route('/create'),
-            'view' => Pages\ViewFooterLink::route('/{record}'),
             'edit' => Pages\EditFooterLink::route('/{record}/edit'),
         ];
     }

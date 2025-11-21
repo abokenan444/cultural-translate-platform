@@ -3,42 +3,55 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SocialLinkResource\Pages;
-use App\Filament\Resources\SocialLinkResource\RelationManagers;
 use App\Models\SocialLink;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SocialLinkResource extends Resource
 {
     protected static ?string $model = SocialLink::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    protected static ?string $navigationGroup = 'Footer & Social';
-
+    protected static ?string $navigationIcon = 'heroicon-o-share';
+    
+    protected static ?string $navigationGroup = 'Website Settings';
+    
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('platform')
+                Forms\Components\Select::make('platform')
+                    ->label('Platform')
                     ->required()
-                    ->maxLength(50),
+                    ->options([
+                        'facebook' => 'Facebook',
+                        'twitter' => 'Twitter',
+                        'instagram' => 'Instagram',
+                        'linkedin' => 'LinkedIn',
+                        'youtube' => 'YouTube',
+                        'github' => 'GitHub',
+                        'tiktok' => 'TikTok',
+                    ]),
                 Forms\Components\TextInput::make('url')
+                    ->label('URL')
                     ->required()
+                    ->url()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('icon')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('sort_order')
+                    ->label('Icon')
+                    ->maxLength(255)
+                    ->helperText('Icon class or name'),
+                Forms\Components\TextInput::make('display_order')
+                    ->label('Display Order')
                     ->numeric()
                     ->default(0),
-                Forms\Components\Toggle::make('is_active'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
             ]);
     }
 
@@ -47,44 +60,56 @@ class SocialLinkResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('platform')
-                    ->searchable(),
+                    ->label('Platform')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'facebook' => 'info',
+                        'twitter' => 'primary',
+                        'instagram' => 'danger',
+                        'linkedin' => 'success',
+                        'youtube' => 'warning',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('url')
-                    ->searchable(),
+                    ->label('URL')
+                    ->limit(50),
                 Tables\Columns\TextColumn::make('icon')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Icon'),
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('display_order')
+                    ->label('Order')
+                    ->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('platform')
+                    ->label('Platform')
+                    ->options([
+                        'facebook' => 'Facebook',
+                        'twitter' => 'Twitter',
+                        'instagram' => 'Instagram',
+                        'linkedin' => 'LinkedIn',
+                        'youtube' => 'YouTube',
+                        'github' => 'GitHub',
+                        'tiktok' => 'TikTok',
+                    ]),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('display_order');
     }
 
     public static function getPages(): array
@@ -92,7 +117,6 @@ class SocialLinkResource extends Resource
         return [
             'index' => Pages\ListSocialLinks::route('/'),
             'create' => Pages\CreateSocialLink::route('/create'),
-            'view' => Pages\ViewSocialLink::route('/{record}'),
             'edit' => Pages\EditSocialLink::route('/{record}/edit'),
         ];
     }

@@ -3,49 +3,56 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IntegrationResource\Pages;
-use App\Filament\Resources\IntegrationResource\RelationManagers;
 use App\Models\Integration;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class IntegrationResource extends Resource
 {
     protected static ?string $model = Integration::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    protected static ?string $navigationGroup = 'Integrations & API';
-
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationIcon = 'heroicon-o-puzzle-piece';
+    
+    protected static ?string $navigationGroup = 'Content Management';
+    
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                Forms\Components\TextInput::make('name_en')
+                    ->label('Name (English)')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('slug')
+                Forms\Components\TextInput::make('name_ar')
+                    ->label('Name (Arabic)')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('description')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('logo')
-                    ->maxLength(255),
+                Forms\Components\Textarea::make('description_en')
+                    ->label('Description (English)')
+                    ->rows(3),
+                Forms\Components\Textarea::make('description_ar')
+                    ->label('Description (Arabic)')
+                    ->rows(3),
+                Forms\Components\TextInput::make('logo_url')
+                    ->label('Logo URL')
+                    ->maxLength(255)
+                    ->url(),
                 Forms\Components\TextInput::make('website_url')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('documentation_url')
-                    ->maxLength(255),
-                Forms\Components\Toggle::make('is_active'),
-                Forms\Components\Toggle::make('is_featured'),
-                Forms\Components\TextInput::make('sort_order')
+                    ->label('Website URL')
+                    ->maxLength(255)
+                    ->url(),
+                Forms\Components\TextInput::make('display_order')
+                    ->label('Display Order')
                     ->numeric()
                     ->default(0),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
             ]);
     }
 
@@ -53,51 +60,47 @@ class IntegrationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('logo')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('website_url')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('documentation_url')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('is_featured')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('name_en')
+                    ->label('Name (EN)')
+                    ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('name_ar')
+                    ->label('Name (AR)')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\ImageColumn::make('logo_url')
+                    ->label('Logo')
+                    ->circular(),
+                Tables\Columns\TextColumn::make('display_order')
+                    ->label('Order')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->boolean()
+                    ->trueLabel('Active only')
+                    ->falseLabel('Inactive only')
+                    ->native(false),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('display_order');
     }
 
     public static function getPages(): array
@@ -105,7 +108,6 @@ class IntegrationResource extends Resource
         return [
             'index' => Pages\ListIntegrations::route('/'),
             'create' => Pages\CreateIntegration::route('/create'),
-            'view' => Pages\ViewIntegration::route('/{record}'),
             'edit' => Pages\EditIntegration::route('/{record}/edit'),
         ];
     }

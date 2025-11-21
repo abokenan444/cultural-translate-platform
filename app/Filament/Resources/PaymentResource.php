@@ -3,41 +3,83 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentResource\Pages;
-use App\Filament\Resources\PaymentResource\RelationManagers;
 use App\Models\Payment;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    
+    protected static ?string $navigationGroup = 'Subscription Management';
+    
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('invoice_id')
+                Forms\Components\Select::make('company_id')
+                    ->label('Company')
+                    ->relationship('company', 'name')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('stripe_payment_id'),
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('subscription_id')
+                    ->label('Subscription')
+                    ->relationship('subscription', 'id')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('amount')
+                    ->label('Amount')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('currency')
-                    ->required(),
-                Forms\Components\TextInput::make('payment_method'),
-                Forms\Components\TextInput::make('status')
-                    ->required(),
+                    ->numeric()
+                    ->prefix('$'),
+                Forms\Components\Select::make('currency')
+                    ->label('Currency')
+                    ->options([
+                        'USD' => 'USD',
+                        'EUR' => 'EUR',
+                        'GBP' => 'GBP',
+                        'SAR' => 'SAR',
+                    ])
+                    ->default('USD'),
+                Forms\Components\Select::make('payment_method')
+                    ->label('Payment Method')
+                    ->options([
+                        'credit_card' => 'Credit Card',
+                        'paypal' => 'PayPal',
+                        'bank_transfer' => 'Bank Transfer',
+                        'stripe' => 'Stripe',
+                    ])
+                    ->default('credit_card'),
+                Forms\Components\Select::make('status')
+                    ->label('Status')
+                    ->required()
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed',
+                        'refunded' => 'Refunded',
+                    ])
+                    ->default('pending'),
+                Forms\Components\TextInput::make('transaction_id')
+                    ->label('Transaction ID')
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('payment_details')
+                    ->label('Payment Details (JSON)')
+                    ->rows(3),
+                Forms\Components\Textarea::make('error_message')
+                    ->label('Error Message')
+                    ->rows(2),
+                Forms\Components\DateTimePicker::make('paid_at')
+                    ->label('Paid At'),
             ]);
     }
 
@@ -45,34 +87,69 @@ class PaymentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('invoice_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('company.name')
+                    ->label('Company')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('stripe_payment_id')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
+                    ->label('Amount')
+                    ->money('USD')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('currency')
-                    ->searchable(),
+                    ->label('Currency')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('payment_method')
-                    ->searchable(),
+                    ->label('Method')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'completed' => 'success',
+                        'processing' => 'info',
+                        'pending' => 'warning',
+                        'failed' => 'danger',
+                        'refunded' => 'gray',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('transaction_id')
+                    ->label('Transaction')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('paid_at')
+                    ->label('Paid')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'failed' => 'Failed',
+                        'refunded' => 'Refunded',
+                    ]),
+                Tables\Filters\SelectFilter::make('payment_method')
+                    ->label('Payment Method')
+                    ->options([
+                        'credit_card' => 'Credit Card',
+                        'paypal' => 'PayPal',
+                        'bank_transfer' => 'Bank Transfer',
+                        'stripe' => 'Stripe',
+                    ]),
+                Tables\Filters\SelectFilter::make('company_id')
+                    ->label('Company')
+                    ->relationship('company', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -82,14 +159,8 @@ class PaymentResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getPages(): array
@@ -97,7 +168,6 @@ class PaymentResource extends Resource
         return [
             'index' => Pages\ListPayments::route('/'),
             'create' => Pages\CreatePayment::route('/create'),
-            'view' => Pages\ViewPayment::route('/{record}'),
             'edit' => Pages\EditPayment::route('/{record}/edit'),
         ];
     }
