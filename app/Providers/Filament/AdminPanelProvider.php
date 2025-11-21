@@ -22,8 +22,8 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Sky,
             ])
             ->discoverResources(
-                in: app_path('Filament/Admin/Resources'),
-                for: 'App\\Filament\\Admin\\Resources',
+                in: app_path('Filament/Resources'),
+                for: 'App\\Filament\\Resources',
             )
             ->discoverPages(
                 in: app_path('Filament/Admin/Pages'),
