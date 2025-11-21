@@ -37,9 +37,8 @@ Route::get('/features', function () {
     return view('pages.features');
 })->name('features');
 
-Route::get('/pricing', function () {
-    return view('pages.pricing');
-})->name('pricing');
+Route::get('/pricing', [\App\Http\Controllers\PricingController::class, 'index'])->name('pricing');
+Route::post('/contact-custom-plan', [\App\Http\Controllers\PricingController::class, 'contactCustomPlan'])->name('pricing.contact-custom');
 
 Route::get('/use-cases', function () {
     return view('pages.use-cases');
@@ -64,6 +63,11 @@ Route::get('/blog', function () {
 Route::get('/integrations', function () {
     return view('pages.integrations');
 })->name('integrations');
+
+// Complaints
+Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'index'])->name('complaints');
+Route::post('/complaints/submit', [\App\Http\Controllers\ComplaintController::class, 'submit'])->name('complaints.submit');
+Route::get('/complaints/track', [\App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
 // Dashboard for authenticated users
 Route::middleware(['auth'])->group(function () {

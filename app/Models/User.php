@@ -57,4 +57,62 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Company::class);
     }
+
+    /**
+     * Get the user's subscriptions.
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(UserSubscription::class);
+    }
+
+    /**
+     * Get the user's active subscription.
+     */
+    public function activeSubscription()
+    {
+        return $this->hasOne(UserSubscription::class)
+            ->where('status', 'active')
+            ->latest();
+    }
+
+    /**
+     * Get the user's complaints.
+     */
+    public function complaints()
+    {
+        return $this->hasMany(Complaint::class);
+    }
+
+    /**
+     * Get the user's token usage logs.
+     */
+    public function tokenUsageLogs()
+    {
+        return $this->hasMany(TokenUsageLog::class);
+    }
+
+    /**
+     * Check if user has an active subscription.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->exists();
+    }
+
+    /**
+     * Check if user has sufficient tokens.
+     */
+    public function hasTokens(int $amount = 1): bool
+    {
+        $subscription = $this->activeSubscription;
+        
+        if (!$subscription) {
+            return false;
+        }
+        
+        return $subscription->tokens_remaining >= $amount;
+    }
 }
