@@ -7,15 +7,24 @@ use Illuminate\Support\ServiceProvider;
 
 class FilamentServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        //
+    }
 
+    /**
+     * Bootstrap services.
+     */
     public function boot(): void
     {
+        // Pages are automatically discovered by AdminPanelProvider
+        // No need to register them manually here
+        
         Filament::serving(function () {
-            Filament::registerPages([
-                \App\Filament\Admin\Pages\AiDevChat::class,
-                \App\Filament\Admin\Pages\AiServerConsole::class,
-            ]);
+            // Add any global Filament configurations here if needed
         });
     }
 }
