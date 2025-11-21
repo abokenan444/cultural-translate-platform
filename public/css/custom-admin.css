@@ -1,0 +1,255 @@
+/* CulturalTranslate Admin Panel - Custom Styles */
+
+/* إضافة تدرجات لونية جميلة للخلفية */
+.fi-sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+/* تحسين شكل الـ Widgets */
+.fi-wi-stats-overview-stat {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* تحسين الأيقونات في الـ Widgets */
+.fi-wi-stats-overview-stat-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+/* تحسين شكل الجداول */
+.fi-ta-table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.fi-ta-header-cell {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #475569;
+}
+
+.fi-ta-row:hover {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+/* تحسين الأزرار */
+.fi-btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.fi-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.fi-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+}
+
+/* تحسين البطاقات */
+.fi-section {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الـ Header */
+.fi-topbar {
+    background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الـ Sidebar Navigation */
+.fi-sidebar-nav-item {
+    border-radius: 8px;
+    margin: 4px 8px;
+    transition: all 0.2s ease;
+}
+
+.fi-sidebar-nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+.fi-sidebar-nav-item.fi-active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+/* تحسين الـ Forms */
+.fi-fo-field-wrp {
+    margin-bottom: 1.5rem;
+}
+
+.fi-input {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.fi-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* تحسين الـ Badges */
+.fi-badge {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 4px 12px;
+}
+
+/* تحسين الـ Stats Numbers */
+.fi-wi-stats-overview-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* تحسين الـ Dashboard Welcome */
+.fi-section-header-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* إضافة تأثيرات للـ Modal */
+.fi-modal {
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* تحسين الـ Pagination */
+.fi-pagination {
+    border-radius: 8px;
+}
+
+.fi-pagination-item {
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.fi-pagination-item:hover {
+    background-color: #f1f5f9;
+    transform: scale(1.05);
+}
+
+/* تحسين الـ Search */
+.fi-ta-search-field {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.fi-ta-search-field:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark Mode Improvements */
+.dark .fi-wi-stats-overview-stat {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+}
+
+.dark .fi-ta-header-cell {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #cbd5e1;
+}
+
+.dark .fi-ta-row:hover {
+    background-color: #1e293b;
+}
+
+/* إضافة أنيميشن للتحميل */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.fi-loading {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* تحسين الـ Notifications */
+.fi-notification {
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الـ Dropdown */
+.fi-dropdown-list {
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* إضافة تأثيرات للـ Icons */
+.fi-icon {
+    transition: all 0.2s ease;
+}
+
+.fi-icon:hover {
+    transform: scale(1.1);
+}
+
+/* تحسين الـ Tabs */
+.fi-tabs-item {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.fi-tabs-item.fi-active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+/* إضافة Gradient للعناوين الرئيسية */
+h1, h2, h3 {
+    background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* تحسين الـ Breadcrumbs */
+.fi-breadcrumbs {
+    border-radius: 8px;
+    padding: 8px 16px;
+    background-color: #f8fafc;
+}
+
+/* إضافة تأثير للـ Cards */
+.fi-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.fi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
