@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LanguageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,9 @@ Route::domain('admin.culturaltranslate.com')->group(function () {
 |--------------------------------------------------------------------------
 | Routes for culturaltranslate.com main domain
 */
+
+// Language Switcher
+Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
 // Landing Page
 Route::get('/', function () {

@@ -71,6 +71,7 @@
                     <a href="#pricing" class="text-gray-700 hover:text-indigo-600 transition">Pricing</a>
                     <a href="#use-cases" class="text-gray-700 hover:text-indigo-600 transition">Use Cases</a>
                     <a href="/api-docs" class="text-gray-700 hover:text-indigo-600 transition">API Docs</a>
+                    <x-language-switcher />
                     <a href="/admin" class="text-gray-700 hover:text-indigo-600 transition">Login</a>
                     <a href="/register" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">Get Started</a>
                 </div>
@@ -93,6 +94,9 @@
                 <a href="#pricing" class="block text-gray-700 hover:text-indigo-600">Pricing</a>
                 <a href="#use-cases" class="block text-gray-700 hover:text-indigo-600">Use Cases</a>
                 <a href="/api-docs" class="block text-gray-700 hover:text-indigo-600">API Docs</a>
+                <div class="py-2">
+                    <x-language-switcher />
+                </div>
                 <a href="/admin" class="block text-gray-700 hover:text-indigo-600">Login</a>
                 <a href="/register" class="block bg-indigo-600 text-white px-6 py-2 rounded-lg text-center">Get Started</a>
             </div>
