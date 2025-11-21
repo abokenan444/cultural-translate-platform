@@ -13,7 +13,19 @@ return new class extends Migration
     {
         Schema::create('ai_agent_messages', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('role')->default('user'); // user, assistant, system
+            $table->text('message');
+            $table->text('response')->nullable();
+            $table->json('meta')->nullable(); // للمعلومات الإضافية مثل model, tokens, etc
+            $table->string('status')->default('pending'); // pending, processing, completed, failed
             $table->timestamps();
+            
+            // Indexes
+            $table->index('user_id');
+            $table->index('role');
+            $table->index('status');
+            $table->index('created_at');
         });
     }
 
