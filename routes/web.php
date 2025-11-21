@@ -69,11 +69,22 @@ Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'in
 Route::post('/complaints/submit', [\App\Http\Controllers\ComplaintController::class, 'submit'])->name('complaints.submit');
 Route::get('/complaints/track', [\App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
-// Dashboard for authenticated users
+// Payment Routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard.app');
-    })->name('dashboard');
+    Route::get('/checkout/{plan}', [\App\Http\Controllers\StripePaymentController::class, 'checkout'])->name('checkout');
+    Route::post('/payment/create-intent', [\App\Http\Controllers\StripePaymentController::class, 'createPaymentIntent'])->name('payment.create-intent');
+});
+
+// Stripe Webhook (no auth required)
+Route::post('/webhook/stripe', [\App\Http\Controllers\StripePaymentController::class, 'webhook'])->name('webhook.stripe');
+
+// User Dashboard
+Route::middleware(['auth'])->prefix('dashboard')->group(function () {
+    Route::get('/', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/subscription', [\App\Http\Controllers\UserDashboardController::class, 'subscription'])->name('dashboard.subscription');
+    Route::get('/usage', [\App\Http\Controllers\UserDashboardController::class, 'usage'])->name('dashboard.usage');
+    Route::get('/billing', [\App\Http\Controllers\UserDashboardController::class, 'billing'])->name('dashboard.billing');
+    Route::get('/companies', [\App\Http\Controllers\UserDashboardController::class, 'companies'])->name('dashboard.companies');
 });
 
 /*

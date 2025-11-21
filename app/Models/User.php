@@ -115,4 +115,77 @@ class User extends Authenticatable
         
         return $subscription->tokens_remaining >= $amount;
     }
+
+    /**
+     * Get the user's payments.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the user's token usage logs.
+     */
+    public function tokenUsageLogs()
+    {
+        return $this->hasMany(TokenUsageLog::class);
+    }
+
+    /**
+     * Get the user's owned companies.
+     */
+    public function ownedCompanies()
+    {
+        return $this->hasMany(Company::class, 'owner_id');
+    }
+
+    /**
+     * Get the user's company memberships.
+     */
+    public function companyMemberships()
+    {
+        return $this->hasMany(CompanyMember::class);
+    }
+
+    /**
+     * Get all companies the user is a member of.
+     */
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class, 'company_members')
+            ->withPivot(['role', 'permissions', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user is owner of a company.
+     */
+    public function isCompanyOwner(Company $company): bool
+    {
+        return $this->id === $company->owner_id;
+    }
+
+    /**
+     * Check if user is member of a company.
+     */
+    public function isMemberOf(Company $company): bool
+    {
+        return $this->companyMemberships()
+            ->where('company_id', $company->id)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Get user's role in a company.
+     */
+    public function getRoleInCompany(Company $company): ?string
+    {
+        $membership = $this->companyMemberships()
+            ->where('company_id', $company->id)
+            ->first();
+        
+        return $membership?->role;
+    }
 }

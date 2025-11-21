@@ -16,6 +16,10 @@ class Company extends Model
         'slug',
         'primary_contact_email',
         'plan_id',
+        'owner_id',
+        'subscription_plan_id',
+        'max_members',
+        'settings',
         'is_active',
         'monthly_word_limit',
         'current_month_usage',
@@ -25,6 +29,7 @@ class Company extends Model
         'is_active' => 'boolean',
         'monthly_word_limit' => 'integer',
         'current_month_usage' => 'integer',
+        'settings' => 'array',
     ];
 
     public function plan(): BelongsTo
@@ -50,5 +55,41 @@ class Company extends Model
     public function translationLogs(): HasMany
     {
         return $this->hasMany(TranslationLog::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(CompanyMember::class);
+    }
+
+    public function activeMembers(): HasMany
+    {
+        return $this->hasMany(CompanyMember::class)->where('is_active', true);
+    }
+
+    public function hasMember(User $user): bool
+    {
+        return $this->members()->where('user_id', $user->id)->exists();
+    }
+
+    public function getMemberRole(User $user): ?string
+    {
+        $member = $this->members()->where('user_id', $user->id)->first();
+        return $member?->role;
+    }
+
+    public function canAddMember(): bool
+    {
+        return $this->activeMembers()->count() < $this->max_members;
     }
 }
