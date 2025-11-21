@@ -2,9 +2,27 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Landing Page
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('landing');
+})->name('home');
+
+// Public Pages
+Route::get('/features', function () {
+    return view('pages.features');
+})->name('features');
+
+Route::get('/pricing', function () {
+    return view('pages.pricing');
+})->name('pricing');
+
+Route::get('/use-cases', function () {
+    return view('pages.use-cases');
+})->name('use-cases');
+
+Route::get('/api-docs', function () {
+    return view('pages.api-docs');
+})->name('api-docs');
 
 Route::middleware(['auth'])->prefix('admin-dashboard')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])
