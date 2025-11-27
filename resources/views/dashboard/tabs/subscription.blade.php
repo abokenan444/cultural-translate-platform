@@ -217,6 +217,21 @@ function subscriptionTab() {
                 this.subscription = response.data;
                 const usageResponse = await window.apiClient.getUsage();
                 this.usage = usageResponse.data;
+                
+                // Load available plans from API
+                const plansResponse = await window.apiClient.getPlans();
+                if (plansResponse.success && plansResponse.data) {
+                    this.plans = plansResponse.data.map(plan => ({
+                        id: plan.id,
+                        name: plan.name,
+                        price: plan.price,
+                        features: [
+                            `${plan.tokens_limit || 'Unlimited'} tokens/month`,
+                            `${plan.max_team_members || 'Unlimited'} team members`,
+                            plan.features || 'All features included'
+                        ]
+                    }));
+                }
             } catch (error) {
                 console.error('Failed to load subscription:', error);
             }

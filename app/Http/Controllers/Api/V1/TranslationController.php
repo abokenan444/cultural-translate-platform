@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Translation;
 use App\Models\UsageLog;
 use App\Models\Language;
+use App\Services\TranslationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -44,6 +45,29 @@ class TranslationController extends Controller
 
         // Check user's subscription limits
         $subscription = $user->subscription;
+        
+        // Auto-create free trial if user doesn't have a subscription
+        if (!$subscription) {
+            $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')
+                ->orWhere('price', 0)
+                ->first();
+            
+            if ($freePlan) {
+                $subscription = \App\Models\UserSubscription::create([
+                    'user_id' => $user->id,
+                    'subscription_plan_id' => $freePlan->id,
+                    'status' => 'active',
+                    'tokens_used' => 0,
+                    'tokens_remaining' => $freePlan->tokens_limit ?? 100000,
+                    'starts_at' => now(),
+                    'expires_at' => now()->addDays(14),
+                    'auto_renew' => false,
+                ]);
+                // Refresh user's subscription relationship
+                $user->load('subscriptions');
+            }
+        }
+        
         if (!$subscription || !$subscription->isActive()) {
             return response()->json([
                 'success' => false,
@@ -66,28 +90,37 @@ class TranslationController extends Controller
             ], 403);
         }
 
-        // Perform translation (mock implementation)
-        $translatedText = $this->performTranslation(
-            $text,
-            $sourceLanguage,
-            $targetLanguage,
-            $aiModel,
-            $culturalAdaptation,
-            $preserveBrandVoice
-        );
-
-        // Save translation record
-        $translation = Translation::create([
-            'user_id' => $user->id,
-            'source_language_id' => Language::where('code', $sourceLanguage)->first()?->id,
-            'target_language_id' => Language::where('code', $targetLanguage)->first()?->id,
-            'source_text' => $text,
-            'translated_text' => $translatedText,
-            'ai_model' => $aiModel,
-            'characters_count' => $charactersUsed,
+        // Perform translation using TranslationService
+        $translationService = new TranslationService();
+        
+        $result = $translationService->translate([
+            'text' => $text,
+            'source_language' => $sourceLanguage,
+            'target_language' => $targetLanguage,
+            'model' => $aiModel,
+            'tone' => $request->tone ?? 'neutral',
             'cultural_adaptation' => $culturalAdaptation,
-            'status' => 'completed',
-        ]);
+            'preserve_brand_voice' => $preserveBrandVoice,
+        ], $user);
+        
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Translation failed'
+            ], 500);
+        }
+        
+        $translatedText = $result['translation'];
+        $tokensUsed = $result['tokens_used'] ?? 0;
+
+        // Translation is already saved by TranslationService
+        // Get the translation ID from result
+        $translationId = $result['translation_id'] ?? null;
+        
+        // Update subscription tokens
+        if (isset($tokensUsed)) {
+            $subscription->decrement('tokens_remaining', $tokensUsed);
+        }
 
         // Log usage
         UsageLog::create([
@@ -96,10 +129,11 @@ class TranslationController extends Controller
             'characters_used' => $charactersUsed,
             'api_calls' => 1,
             'metadata' => json_encode([
-                'translation_id' => $translation->id,
+                'translation_id' => $translationId,
                 'source_language' => $sourceLanguage,
                 'target_language' => $targetLanguage,
                 'ai_model' => $aiModel,
+                'tokens_used' => $tokensUsed ?? 0,
             ]),
         ]);
 
@@ -107,15 +141,16 @@ class TranslationController extends Controller
             'success' => true,
             'message' => 'Translation completed successfully',
             'data' => [
-                'translation_id' => $translation->id,
+                'translation_id' => $translationId,
                 'source_text' => $text,
                 'translated_text' => $translatedText,
                 'source_language' => $sourceLanguage,
                 'target_language' => $targetLanguage,
                 'characters_used' => $charactersUsed,
+                'tokens_used' => $tokensUsed ?? 0,
                 'ai_model' => $aiModel,
                 'cultural_adaptation' => $culturalAdaptation,
-                'quality_score' => 0.95, // Mock score
+                'cost' => $result['cost'] ?? 0,
             ]
         ]);
     }

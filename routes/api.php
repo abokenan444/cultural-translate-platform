@@ -6,6 +6,7 @@ use App\Http\Controllers\AIAgentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\TranslationController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\TrainingDataController;
 use App\Http\Controllers\Api\V1\VoiceTranslationController;
 use App\Http\Controllers\Api\V1\CollaborationController;
 use App\Http\Controllers\Api\V1\AIContextController;
@@ -43,10 +44,13 @@ Route::prefix('v1')->group(function () {
 });
 
 // Protected routes
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1')->middleware('auth:web')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    
+    // Temporary: Fix subscription for existing users
+    Route::post('/fix-subscription', [\App\Http\Controllers\Api\V1\SubscriptionFixController::class, 'createFreeTrial']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     
@@ -63,6 +67,13 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/subscription/upgrade', [SubscriptionController::class, 'upgrade']);
     Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel']);
     Route::get('/subscription/usage', [SubscriptionController::class, 'usage']);
+    
+    // Training Data (for Deep Learning)
+    Route::get('/training-data/recent', [TrainingDataController::class, 'getRecent']);
+    Route::post('/training-data/{id}/rate', [TrainingDataController::class, 'rate']);
+    Route::get('/training-data/statistics', [TrainingDataController::class, 'statistics']);
+    Route::get('/training-data/export', [TrainingDataController::class, 'export']);
+    Route::post('/training-data/bulk-approve', [TrainingDataController::class, 'bulkApprove']);
     
     // Voice Translation
     Route::post('/voice/translate', [VoiceTranslationController::class, 'translateVoice']);

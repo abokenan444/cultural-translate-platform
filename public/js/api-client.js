@@ -34,6 +34,13 @@ class APIClient {
             'Accept': 'application/json',
         };
 
+        // Add CSRF token for session-based auth
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken;
+        }
+
+        // Also support Bearer token if available
         if (this.token) {
             headers['Authorization'] = `Bearer ${this.token}`;
         }
@@ -48,6 +55,7 @@ class APIClient {
         const url = `${this.baseURL}${endpoint}`;
         const config = {
             ...options,
+            credentials: 'include', // Include cookies for session auth
             headers: {
                 ...this.getHeaders(),
                 ...options.headers,
@@ -198,6 +206,10 @@ class APIClient {
     async getSubscription() {
         return this.request('/subscription');
     }
+    
+    async getPlans() {
+        return this.request('/plans');
+    }
 
     async getUsage() {
         return this.request('/usage');
@@ -241,4 +253,66 @@ class APIClient {
 }
 
 // Create global instance
+window.apiClient = new APIClient();
+
+    /**
+     * Training Data Methods (for Deep Learning System)
+     */
+    
+    async getRecentTranslationsForRating() {
+        return this.request('/training-data/recent');
+    }
+    
+    async rateTranslation(translationId, rating, feedback = null) {
+        return this.request(`/training-data/${translationId}/rate`, {
+            method: 'POST',
+            body: JSON.stringify({ rating, feedback }),
+        });
+    }
+    
+    async getTrainingDataStatistics() {
+        return this.request('/training-data/statistics');
+    }
+    
+    async exportTrainingData(sourceLang = null, targetLang = null, format = 'jsonl') {
+        const params = new URLSearchParams();
+        if (sourceLang) params.append('source_language', sourceLang);
+        if (targetLang) params.append('target_language', targetLang);
+        if (format) params.append('format', format);
+        
+        const url = `/training-data/export${params.toString() ? '?' + params.toString() : ''}`;
+        
+        // Download file
+        const response = await fetch(this.baseURL + url, {
+            method: 'GET',
+            headers: this.getHeaders(),
+            credentials: 'include',
+        });
+        
+        if (!response.ok) {
+            throw new Error('Export failed');
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `training_data_${Date.now()}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        return { success: true, message: 'Export started' };
+    }
+    
+    async bulkApproveTranslations(translationIds) {
+        return this.request('/training-data/bulk-approve', {
+            method: 'POST',
+            body: JSON.stringify({ translation_ids: translationIds }),
+        });
+    }
+}
+
+// Update global instance
 window.apiClient = new APIClient();

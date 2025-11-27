@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="/js/api-client.js"></script>
+    <script src="/js/auth-token-manager.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -189,8 +190,42 @@
                 },
                 
                 async init() {
+                    await this.ensureApiToken();
                     await this.loadUser();
                     await this.loadStats();
+                },
+                
+                async ensureApiToken() {
+                    // Check if we have a token
+                    const existingToken = localStorage.getItem('auth_token');
+                    if (existingToken) {
+                        window.apiClient.setToken(existingToken);
+                        console.log('✅ Using existing API token');
+                        return;
+                    }
+                    
+                    // Generate new token
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const response = await fetch('/api-token/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success && data.data.access_token) {
+                            localStorage.setItem('auth_token', data.data.access_token);
+                            window.apiClient.setToken(data.data.access_token);
+                            console.log('✅ API Token generated and stored');
+                        }
+                    } catch (error) {
+                        console.error('❌ Failed to generate API token:', error);
+                    }
                 },
                 
                 async loadUser() {

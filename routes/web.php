@@ -69,6 +69,11 @@ Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'in
 Route::post('/complaints/submit', [\App\Http\Controllers\ComplaintController::class, 'submit'])->name('complaints.submit');
 Route::get('/complaints/track', [\App\Http\Controllers\ComplaintController::class, 'track'])->name('complaints.track');
 
+// API Token Generation
+Route::middleware(['auth'])->group(function () {
+    Route::post('/api-token/generate', [\App\Http\Controllers\ApiTokenController::class, 'generate'])->name('api-token.generate');
+});
+
 // Payment Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/{plan}', [\App\Http\Controllers\StripePaymentController::class, 'checkout'])->name('checkout');

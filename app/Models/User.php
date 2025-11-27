@@ -13,6 +13,34 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Automatically create free trial subscription when user is created
+        static::created(function ($user) {
+            $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')
+                ->orWhere('price', 0)
+                ->first();
+            
+            if ($freePlan) {
+                \App\Models\UserSubscription::create([
+                    'user_id' => $user->id,
+                    'subscription_plan_id' => $freePlan->id,
+                    'status' => 'active',
+                    'tokens_used' => 0,
+                    'tokens_remaining' => $freePlan->tokens_limit ?? 100000,
+                    'starts_at' => now(),
+                    'expires_at' => now()->addDays(14),
+                    'auto_renew' => false,
+                ]);
+            }
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -187,5 +215,13 @@ class User extends Authenticatable
             ->first();
         
         return $membership?->role;
+    }
+
+    /**
+     * Get the user's subscription (accessor for compatibility).
+     */
+    public function getSubscriptionAttribute()
+    {
+        return $this->activeSubscription()->first();
     }
 }
