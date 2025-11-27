@@ -1,9 +1,6 @@
 <?php
-
 namespace App\Http;
-
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-
 class Kernel extends HttpKernel
 {
     /**
@@ -15,6 +12,8 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        AppHttpMiddlewareSecurityHeadersMiddleware::class,
+        AppHttpMiddlewareSqlInjectionProtection::class,
         \Illuminate\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
@@ -22,9 +21,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
-
     /**
      * The application's route middleware groups.
      *
@@ -38,32 +35,22 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SetLocale::class,
         ],
-
         'api' => [
-            \App\Http\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
-
-protected $routeMiddleware = [
-    // ...
-    'admin' => \App\Http\Middleware\AdminMiddleware::class,
-];
-
     /**
      * The application's route middleware.
      *
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
+        'ai-owner' => \App\Http\Middleware\EnsureAiDeveloperOwner::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.session_or_token' => \App\Http\Middleware\AuthenticateWithSessionOrToken::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
     ];
 }
-ga

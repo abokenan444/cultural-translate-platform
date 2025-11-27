@@ -126,6 +126,12 @@ class UserSubscription extends Model
         return $this->tokens_remaining > 0;
     }
 
+    public function getRemainingCharacters()
+    {
+        // Estimate: 1 token ≈ 4 characters
+        return $this->tokens_remaining * 4;
+    }
+
     public function getTokenUsagePercentageAttribute()
     {
         if (!$this->plan || $this->plan->tokens_limit == 0) {

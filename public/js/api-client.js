@@ -6,7 +6,7 @@
 class APIClient {
     constructor(baseURL = '/api/v1') {
         this.baseURL = baseURL;
-        this.token = localStorage.getItem('auth_token');
+        this.token = localStorage.getItem('api_token') || localStorage.getItem('auth_token');
     }
 
     /**
@@ -14,7 +14,7 @@ class APIClient {
      */
     setToken(token) {
         this.token = token;
-        localStorage.setItem('auth_token', token);
+        localStorage.setItem('api_token', token);
     }
 
     /**
@@ -22,6 +22,7 @@ class APIClient {
      */
     clearToken() {
         this.token = null;
+        localStorage.removeItem('api_token');
         localStorage.removeItem('auth_token');
     }
 

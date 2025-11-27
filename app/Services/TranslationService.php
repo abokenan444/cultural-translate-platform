@@ -47,7 +47,7 @@ class TranslationService
                 'tokens_in' => $tokensIn,
                 'tokens_out' => $tokensOut,
                 'cost' => $cost,
-                'status' => 'completed',
+                'status' => 'success',
             ]);
             
             return [

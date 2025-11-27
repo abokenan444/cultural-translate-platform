@@ -39,24 +39,6 @@ class AuthController extends Controller
             'company_name' => $request->company_name,
         ]);
 
-        // Create 14-day free trial subscription
-        $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')
-            ->orWhere('price', 0)
-            ->first();
-        
-        if ($freePlan) {
-            \App\Models\UserSubscription::create([
-                'user_id' => $user->id,
-                'subscription_plan_id' => $freePlan->id,
-                'status' => 'active',
-                'tokens_used' => 0,
-                'tokens_remaining' => $freePlan->tokens_limit ?? 100000,
-                'starts_at' => now(),
-                'expires_at' => now()->addDays(14),
-                'auto_renew' => false,
-            ]);
-        }
-
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

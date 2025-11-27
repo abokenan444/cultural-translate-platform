@@ -1,117 +1,107 @@
 <?php
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AIAgentController;
-use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\TranslationController;
-use App\Http\Controllers\Api\V1\SubscriptionController;
-use App\Http\Controllers\Api\V1\TrainingDataController;
-use App\Http\Controllers\Api\V1\VoiceTranslationController;
-use App\Http\Controllers\Api\V1\CollaborationController;
-use App\Http\Controllers\Api\V1\AIContextController;
-use App\Http\Controllers\Api\V1\VisualTranslationController;
-use AppHttpControllersApiV1AnalyticsController;
-use AppHttpControllersApiV1AIAgentController;ller;
-
-Route::middleware(['auth:sanctum'])   // يمكنك تغيير الميدلوير حسب نظامك
-    ->prefix('ai-agent')
-    ->group(function () {
-        Route::get('/health', [AIAgentController::class, 'health']);
-        Route::get('/api-health', [AIAgentController::class, 'apiHealth']);
-        Route::post('/run-command', [AIAgentController::class, 'runCommand']);
-        Route::post('/deploy', [AIAgentController::class, 'deploy']);
-        Route::post('/optimize', [AIAgentController::class, 'optimize']);
-    });
-use App\Http\Controllers\AI\AiChatController;
-
-Route::post('/ai/agent-chat', [AiChatController::class, 'chat']);
-
+use App\Http\Controllers\Api\ApiTranslationController;
+use App\Http\Controllers\Api\ImageTranslationController;
+use App\Http\Controllers\Api\VoiceTranslationController;
 /*
 |--------------------------------------------------------------------------
-| CulturalTranslate API Routes
+| API Routes
 |--------------------------------------------------------------------------
+|
+| Cultural Translate Platform API v2.0
+| Base URL: https://culturaltranslate.com/api/v2
+|
 */
+// Public Demo Translation (no authentication required)
+Route::post('/demo-translate', [ApiTranslationController::class, 'demoTranslate']);
 
-// Public routes
-Route::prefix('v1')->group(function () {
-    // Authentication
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+// API v1 routes - ALL using auth:sanctum (no web middleware)
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    // Translation API
+    Route::post('/translate', [ApiTranslationController::class, 'translate'])->name('api.translate');
     
-    // Public plans
-    Route::get('/plans', [SubscriptionController::class, 'plans']);
+    // User Integrations API
+    Route::get('/integrations', [App\Http\Controllers\UserIntegrationController::class, 'index']);
+    Route::post('/integrations/{platform}/disconnect', [App\Http\Controllers\UserIntegrationController::class, 'disconnect']);
+    
+    // Visual Translation API (Image)
+    Route::post('/visual/image', [ImageTranslationController::class, 'translateImage']);
+    
+    // Voice Translation API
+    Route::post('/visual/voice', [VoiceTranslationController::class, 'translateVoice']);
 });
 
-// Protected routes
-Route::prefix('v1')->middleware('auth:web')->group(function () {
-    // Auth
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
+Route::prefix('v2')->group(function () {
     
-    // Temporary: Fix subscription for existing users
-    Route::post('/fix-subscription', [\App\Http\Controllers\Api\V1\SubscriptionFixController::class, 'createFreeTrial']);
-    Route::put('/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    // Health check
+    Route::get('/health', [ApiTranslationController::class, 'health']);
     
-    // Translations
-    Route::post('/translate', [TranslationController::class, 'translate']);
-    Route::post('/translate/batch', [TranslationController::class, 'batchTranslate']);
-    Route::get('/translations', [TranslationController::class, 'history']);
-    Route::get('/translations/{id}', [TranslationController::class, 'show']);
-    Route::delete('/translations/{id}', [TranslationController::class, 'destroy']);
+    // Get supported languages
+    Route::get('/languages', [ApiTranslationController::class, 'languages']);
     
-    // Subscriptions
-    Route::get('/subscription', [SubscriptionController::class, 'current']);
-    Route::post('/subscription', [SubscriptionController::class, 'subscribe']);
-    Route::put('/subscription/upgrade', [SubscriptionController::class, 'upgrade']);
-    Route::delete('/subscription/cancel', [SubscriptionController::class, 'cancel']);
-    Route::get('/subscription/usage', [SubscriptionController::class, 'usage']);
+    // Get available tones
+    Route::get('/tones', [ApiTranslationController::class, 'tones']);
     
-    // Training Data (for Deep Learning)
-    Route::get('/training-data/recent', [TrainingDataController::class, 'getRecent']);
-    Route::post('/training-data/{id}/rate', [TrainingDataController::class, 'rate']);
-    Route::get('/training-data/statistics', [TrainingDataController::class, 'statistics']);
-    Route::get('/training-data/export', [TrainingDataController::class, 'export']);
-    Route::post('/training-data/bulk-approve', [TrainingDataController::class, 'bulkApprove']);
-    
-    // Voice Translation
-    Route::post('/voice/translate', [VoiceTranslationController::class, 'translateVoice']);
-    Route::post('/voice/text-to-speech', [VoiceTranslationController::class, 'textToSpeech']);
-    Route::post('/voice/stream', [VoiceTranslationController::class, 'streamVoiceTranslation']);
-    
-    // Collaboration
-    Route::post('/projects', [CollaborationController::class, 'createProject']);
-    Route::post('/projects/{projectId}/invite', [CollaborationController::class, 'inviteMember']);
-    Route::get('/projects/{projectId}/session', [CollaborationController::class, 'getSession']);
-    Route::post('/projects/{projectId}/translations/{translationId}/comments', [CollaborationController::class, 'addComment']);
-    Route::post('/projects/{projectId}/translations/{translationId}/suggestions', [CollaborationController::class, 'suggestAlternative']);
-    Route::get('/projects/{projectId}/activity', [CollaborationController::class, 'getActivityFeed']);
-    
-    // AI Context & Smart Suggestions
-    Route::post('/ai/analyze-context', [AIContextController::class, 'analyzeContext']);
-    Route::post('/ai/smart-suggestions', [AIContextController::class, 'getSmartSuggestions']);
-    Route::post('/ai/sentiment', [AIContextController::class, 'detectSentiment']);
-    Route::get('/ai/terminology/{industry}', [AIContextController::class, 'getIndustryTerminology']);
-    
-    // Visual Translation
-    Route::post('/visual/image', [VisualTranslationController::class, 'translateImage']);
-    Route::post('/visual/video', [VisualTranslationController::class, 'translateVideo']);
-    Route::get('/visual/video/status/{jobId}', [VisualTranslationController::class, 'getVideoStatus']);
-    Route::post('/visual/document', [VisualTranslationController::class, 'translateDocument']);
-    Route::post('/visual/screenshot', [VisualTranslationController::class, 'translateScreenshot']);
-    
-    // Analytics & Insigh    // Analytics
-    Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
-    Route::get('/analytics/usage', [AnalyticsController::class, 'usage']);
-    Route::get('/analytics/performance', [AnalyticsController::class, 'performance']);
-    Route::get('/analytics/insights', [AnalyticsController::class, 'insights']);
-    Route::get('/analytics/predictions', [AnalyticsController::class, 'predictions']);
-    Route::post('/analytics/export', [AnalyticsController::class, 'export']);
+    // Protected endpoints (require API key)
+    Route::middleware('auth:sanctum')->group(function () {
+        
+        // Translate text
+        Route::post('/translate', [ApiTranslationController::class, 'translate']);
+        
+        // Detect language
+        Route::post('/detect', [ApiTranslationController::class, 'detectLanguage']);
+        
+        // Get usage statistics
+        Route::get('/stats', [ApiTranslationController::class, 'stats']);
+    });
+});
 
-    // AI Agent (Natural Language Processing)
-    Route::post('/ai-agent/process', [AIAgentController::class, 'process']);
-    Route::get('/ai-agent/status', [AIAgentController::class, 'status']);
-    Route::get('/ai-agent/history', [AIAgentController::class, 'history']);
-    Route::delete('/ai-agent/history', [AIAgentController::class, 'clearHistory']);Report']);
+// Feedback API
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/feedback', [App\Http\Controllers\Api\FeedbackController::class, 'submitFeedback']);
+    Route::get('/feedback/{translationId}', [App\Http\Controllers\Api\FeedbackController::class, 'getFeedback']);
+    Route::get('/versions/{translationId}', [App\Http\Controllers\Api\FeedbackController::class, 'getSuggestedVersions']);
+    Route::post('/versions/{versionId}/approve', [App\Http\Controllers\Api\FeedbackController::class, 'approveVersion']);
+    Route::get('/user/stats', [App\Http\Controllers\Api\FeedbackController::class, 'getUserStats']);
+});
+
+Route::post('/translate/demo', [App\Http\Controllers\DemoTranslationController::class, 'translate']);
+
+// Dashboard API (requires authentication)
+Route::middleware('auth:web')->prefix('dashboard')->group(function () {
+    Route::get('/user', [App\Http\Controllers\DashboardApiController::class, 'getUser']);
+    Route::get('/stats', [App\Http\Controllers\DashboardApiController::class, 'getStats']);
+    Route::get('/usage', [App\Http\Controllers\DashboardApiController::class, 'getUsageData']);
+    Route::get('/languages', [App\Http\Controllers\DashboardApiController::class, 'getLanguagesData']);
+    Route::get('/history', [App\Http\Controllers\DashboardApiController::class, 'getHistory']);
+    Route::get('/projects', [App\Http\Controllers\DashboardApiController::class, 'getProjects']);
+    Route::get('/subscription', [App\Http\Controllers\DashboardApiController::class, 'getSubscription']);
+});
+
+// User Integrations API (requires authentication)
+Route::middleware('auth:web')->prefix('integrations')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\UserIntegrationController::class, 'index']);
+    Route::get('/stats', [App\Http\Controllers\Api\UserIntegrationController::class, 'stats']);
+    Route::get('/{platform}', [App\Http\Controllers\Api\UserIntegrationController::class, 'show']);
+});
+
+// Training Data API (for Deep Learning System)
+Route::middleware('auth:sanctum')->prefix('v1/training-data')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'index']);
+    Route::post('/', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'store']);
+    Route::get('/{id}', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'show']);
+    Route::put('/{id}', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'update']);
+    Route::delete('/{id}', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'destroy']);
+    Route::post('/{id}/approve', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'approve']);
+    Route::post('/{id}/reject', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'reject']);
+    Route::get('/export/dataset', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'exportDataset']);
+    Route::get('/stats/overview', [App\Http\Controllers\Api\V1\TrainingDataController::class, 'stats']);
+});
+
+// Subscription Plans API
+Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
+    Route::get('/plans', [App\Http\Controllers\Api\V1\SubscriptionController::class, 'getPlans']);
+    Route::get('/me', function(\Illuminate\Http\Request $request) {
+        return response()->json(['data' => $request->user()]);
+    });
 });
