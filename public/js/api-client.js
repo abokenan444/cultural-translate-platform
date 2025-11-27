@@ -207,10 +207,6 @@ class APIClient {
     async getSubscription() {
         return this.request('/subscription');
     }
-    
-    async getPlans() {
-        return this.request('/plans');
-    }
 
     async getUsage() {
         return this.request('/usage');
@@ -251,10 +247,6 @@ class APIClient {
             body: JSON.stringify({ email, role }),
         });
     }
-}
-
-// Create global instance
-window.apiClient = new APIClient();
 
     /**
      * Training Data Methods (for Deep Learning System)
@@ -315,5 +307,5 @@ window.apiClient = new APIClient();
     }
 }
 
-// Update global instance
+// Create global instance
 window.apiClient = new APIClient();
