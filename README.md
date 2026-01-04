@@ -202,6 +202,7 @@ resources/views/            # Blade Templates
 - [VISION.md](VISION.md) - **Vision, strategy, and roadmap** ⭐
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Comprehensive deployment guide
 - [QUICK_DEPLOY.md](QUICK_DEPLOY.md) - Quick deployment steps
+- [DEPLOYMENT_SCRIPTS.md](DEPLOYMENT_SCRIPTS.md) - **Professional deployment scripts documentation** 🚀
 - [README.laravel.md](README.laravel.md) - Laravel framework documentation
 - [LANGUAGE_SWITCHER_FIX_REPORT.md](LANGUAGE_SWITCHER_FIX_REPORT.md) - Technical report on multi-language support
 - [DEPRECATED_FILES.md](DEPRECATED_FILES.md) - List of deprecated components

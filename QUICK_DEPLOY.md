@@ -229,10 +229,12 @@ npm run build
 If you encounter issues:
 
 1. **Application Logs:** `storage/logs/laravel.log`
-2. **Web Server Logs:** `/var/log/nginx/error.log`
-3. **Browser Console:** Check for JavaScript errors (F12)
-4. **Network Tab:** Inspect failed API requests
-5. **Comprehensive Guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
+2. **Deployment Logs:** `storage/logs/deployment-*.log`
+3. **Web Server Logs:** `/var/log/nginx/error.log`
+4. **Browser Console:** Check for JavaScript errors (F12)
+5. **Network Tab:** Inspect failed API requests
+6. **Comprehensive Guide:** See [DEPLOYMENT.md](DEPLOYMENT.md)
+7. **Scripts Documentation:** See [DEPLOYMENT_SCRIPTS.md](DEPLOYMENT_SCRIPTS.md)
 
 ---
 
