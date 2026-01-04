@@ -65,21 +65,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/stats', [App\Http\Controllers\Api\FeedbackController::class, 'getUserStats']);
 });
 
-Route::post('/translate/demo', [App\Http\Controllers\DemoTranslationController::class, 'translate']);
-
-// Dashboard API (requires authentication)
-Route::middleware('auth:web')->prefix('dashboard')->group(function () {
-    Route::get('/user', [App\Http\Controllers\DashboardApiController::class, 'getUser']);
-    Route::get('/stats', [App\Http\Controllers\DashboardApiController::class, 'getStats']);
-    Route::get('/usage', [App\Http\Controllers\DashboardApiController::class, 'getUsageData']);
-    Route::get('/languages', [App\Http\Controllers\DashboardApiController::class, 'getLanguagesData']);
-    Route::get('/history', [App\Http\Controllers\DashboardApiController::class, 'getHistory']);
-    Route::get('/projects', [App\Http\Controllers\DashboardApiController::class, 'getProjects']);
-    Route::get('/subscription', [App\Http\Controllers\DashboardApiController::class, 'getSubscription']);
+// Dashboard API (FIXED: Changed from auth:web to auth:sanctum for API consistency)
+Route::middleware('auth:sanctum')->prefix('dashboard')->group(function () {
+    Route::get('/user', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getUser']);
+    Route::get('/stats', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getStats']);
+    Route::get('/usage', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getUsageData']);
+    Route::get('/languages', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getLanguagesData']);
+    Route::get('/history', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getHistory']);
+    Route::get('/projects', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getProjects']);
+    Route::get('/subscription', [App\Http\Controllers\Api\V1\DashboardApiController::class, 'getSubscription']);
 });
 
-// User Integrations API (requires authentication)
-Route::middleware('auth:web')->prefix('integrations')->group(function () {
+// User Integrations API (FIXED: Changed from auth:web to auth:sanctum for API consistency)
+Route::middleware('auth:sanctum')->prefix('integrations')->group(function () {
     Route::get('/', [App\Http\Controllers\Api\UserIntegrationController::class, 'index']);
     Route::get('/stats', [App\Http\Controllers\Api\UserIntegrationController::class, 'stats']);
     Route::get('/{platform}', [App\Http\Controllers\Api\UserIntegrationController::class, 'show']);

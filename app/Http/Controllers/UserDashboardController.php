@@ -10,17 +10,16 @@ class UserDashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        // Get active subscription
-        $subscription = $user->activeSubscription;
-        
-        // Get usage statistics
+
+        // Get active subscription (using accessor for proper retrieval)
+        $subscription = $user->subscription;
+
+        // Get usage statistics with safe null checks
         $stats = [
             'tokens_used' => $subscription?->tokens_used ?? 0,
             'tokens_remaining' => $subscription?->tokens_remaining ?? 0,
-            'tokens_limit' => $subscription?->subscriptionPlan->tokens_limit ?? 0,
-            'usage_percentage' => $subscription ? 
-                round(($subscription->tokens_used / $subscription->subscriptionPlan->tokens_limit) * 100, 1) : 0,
+            'tokens_limit' => $subscription?->subscriptionPlan?->tokens_limit ?? 0,
+            'usage_percentage' => $this->calculateUsagePercentage($subscription),
         ];
         
         // Get recent token usage logs
@@ -60,47 +59,66 @@ class UserDashboardController extends Controller
     public function subscription()
     {
         $user = Auth::user();
-        $subscription = $user->activeSubscription;
-        
+        $subscription = $user->subscription;  // FIXED: Use accessor
+
         return view('user-dashboard.subscription', compact('user', 'subscription'));
     }
-    
+
     public function usage()
     {
         $user = Auth::user();
-        
+
         $usageLogs = $user->tokenUsageLogs()
             ->with('userSubscription.subscriptionPlan')
             ->latest()
             ->paginate(20);
-        
+
         return view('user-dashboard.usage', compact('user', 'usageLogs'));
     }
-    
+
     public function billing()
     {
         $user = Auth::user();
-        
+
         $payments = $user->payments()
             ->with('subscriptionPlan')
             ->latest()
             ->paginate(15);
-        
+
         return view('user-dashboard.billing', compact('user', 'payments'));
     }
-    
+
     public function companies()
     {
         $user = Auth::user();
-        
+
         $ownedCompanies = $user->ownedCompanies()
             ->with(['subscriptionPlan', 'members'])
             ->get();
-        
+
         $memberCompanies = $user->companies()
             ->with(['owner', 'subscriptionPlan'])
             ->get();
-        
+
         return view('user-dashboard.companies', compact('user', 'ownedCompanies', 'memberCompanies'));
+    }
+
+    /**
+     * Calculate usage percentage safely.
+     * Prevents division by zero errors.
+     */
+    private function calculateUsagePercentage($subscription): float
+    {
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return 0.0;
+        }
+
+        $tokensLimit = $subscription->subscriptionPlan->tokens_limit;
+
+        if (!$tokensLimit || $tokensLimit <= 0) {
+            return 0.0;
+        }
+
+        return round(($subscription->tokens_used / $tokensLimit) * 100, 1);
     }
 }

@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * Boot the model.
@@ -21,10 +22,12 @@ class User extends Authenticatable
 
         // Automatically create free trial subscription when user is created
         static::created(function ($user) {
-            $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')
-                ->orWhere('price', 0)
+            $freePlan = \App\Models\SubscriptionPlan::where(function($query) {
+                    $query->where('slug', 'free')
+                          ->orWhere('price', 0);
+                })
                 ->first();
-            
+
             if ($freePlan) {
                 \App\Models\UserSubscription::create([
                     'user_id' => $user->id,
@@ -135,12 +138,12 @@ class User extends Authenticatable
      */
     public function hasTokens(int $amount = 1): bool
     {
-        $subscription = $this->activeSubscription;
-        
+        $subscription = $this->subscription;  // Use accessor instead of relationship
+
         if (!$subscription) {
             return false;
         }
-        
+
         return $subscription->tokens_remaining >= $amount;
     }
 
@@ -150,14 +153,6 @@ class User extends Authenticatable
     public function payments()
     {
         return $this->hasMany(Payment::class);
-    }
-
-    /**
-     * Get the user's token usage logs.
-     */
-    public function tokenUsageLogs()
-    {
-        return $this->hasMany(TokenUsageLog::class);
     }
 
     /**
