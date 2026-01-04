@@ -1,21 +1,49 @@
 # 🚀 Deployment Guide - CulturalTranslate Platform
 
-**تاريخ:** 27 نوفمبر 2025  
-**الإصدار:** v2.0 - Deep Learning System Update
+**Version:** v2.0 - Deep Learning System with Training Data Collection
+**Documentation Status:** Current
 
 ---
 
-## 📋 نظرة عامة
+## 📋 Overview
 
-تم إجراء تحديثات شاملة على المنصة تشمل:
-- ✅ إصلاح نظام الترجمة والاشتراكات
-- ✅ إضافة نظام التعلم العميق الكامل (Translation Memory & Training Data Collection)
-- ✅ إصلاح Frontend API URLs
-- ✅ تحسينات في الأداء والأمان
+This guide covers the deployment of CulturalTranslate Platform with the following major systems:
+
+### ✅ Core Systems
+- **Translation Engine** - Multi-provider AI translation (OpenAI, Google, DeepL)
+- **Deep Learning System** - Training data collection and quality assessment
+- **Subscription Management** - Automated free trials and payment processing
+- **Multi-Language Support** - 14 languages with cultural adaptation
+- **Admin Panel** - Filament v3 with 35+ resources
+
+### 🎯 Purpose
+This platform collects high-quality translation data to build a proprietary, culturally-aware AI translation model
 
 ---
 
-## 🔧 الأوامر المطلوبة (يجب تشغيلها على السيرفر)
+## 📋 Prerequisites
+
+Before deployment, ensure you have:
+
+### Server Requirements
+- **PHP:** 8.2 or higher
+- **Database:** MySQL 5.7+ or MariaDB 10.3+
+- **Web Server:** Nginx or Apache
+- **Composer:** Latest version
+- **Node.js:** 18+ (for frontend assets)
+
+### Required Services
+- **OpenAI API Key** - For AI translations (required)
+- **Stripe Account** - For payment processing (optional but recommended)
+- **Email Service** - For notifications (SMTP/SendGrid/etc.)
+
+### File Permissions
+- `storage/` - Read/Write (775)
+- `bootstrap/cache/` - Read/Write (775)
+
+---
+
+## 🔧 Deployment Commands (Run on Server)
 
 ### 1. الدخول إلى مجلد المشروع
 ```bash
